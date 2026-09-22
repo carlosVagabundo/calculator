@@ -1,48 +1,53 @@
 # Calculator
 
-Calculadora web simples criada como ponto de partida para um projeto que receberá várias melhorias ao longo do desenvolvimento.
+Calculadora web desenvolvida como um projeto evolutivo. A base foi mantida simples e sem dependências externas para facilitar futuras expansões.
 
 ## Tecnologias
 
 - HTML5
 - CSS3
 - JavaScript puro
+- Web Storage (localStorage) para o histórico
 
-## Funcionalidades atuais
+## Funcionalidades da versão 2.0
 
-- Soma
-- Subtração
-- Multiplicação
-- Divisão
+- Soma, subtração, multiplicação e divisão
+- Operações encadeadas com precedência matemática para `×` e `÷`
 - Porcentagem simples
-- Botão para apagar o último caractere
-- Limpeza da calculadora
-- Suporte ao teclado físico
+- Botão `±` para inverter o sinal
+- Backspace para apagar um caractere
+- Memória: `MC`, `MR`, `M+` e `M−`
+- Histórico persistente no navegador
+- Limpeza do histórico
+- Clique em um item do histórico para reutilizar o resultado
+- Suporte a teclado físico
+- Atalhos de teclado para memória
+- Proteção contra divisão por zero
+- Tratamento de expressões inválidas e resultados não finitos
 - Layout responsivo
-- Tratamento de divisão por zero
+
+## Teclado
+
+| Tecla | Ação |
+| --- | --- |
+| `0` a `9` | Digitar número |
+| `.` ou `,` | Decimal |
+| `+ - * /` | Operações |
+| `%` | Porcentagem |
+| `Enter` ou `=` | Resultado |
+| `Backspace` | Apagar |
+| `Esc` ou `Delete` | Limpar |
+| `C` | Limpar |
+| `M` | M+ |
+| `R` | MR |
+| `D` | MC |
 
 ## Como executar
 
-Não é necessário instalar dependências.
-
 1. Clone o repositório.
-2. Abra o arquivo `index.html` no navegador.
+2. Abra `index.html` no navegador.
 
-Para desenvolvimento no VS Code, o projeto também pode ser executado com uma extensão como Live Server.
-
-## Próximos passos
-
-A estrutura foi mantida simples para facilitar futuras expansões, como:
-
-- histórico de cálculos;
-- memória (M+, M-, MR e MC);
-- operações científicas;
-- temas claro e escuro;
-- configurações;
-- acessibilidade;
-- testes automatizados;
-- melhorias de UX;
-- organização em módulos.
+Também é possível usar o Live Server no VS Code.
 
 ## Estrutura
 
@@ -51,9 +56,22 @@ calculator/
 ├── index.html
 ├── style.css
 ├── script.js
-└── README.md
+├── README.md
+└── .github/
+    └── workflows/
+        └── pages.yml
 ```
+
+## Próximos passos sugeridos
+
+- Parênteses
+- Potência e raízes
+- Funções científicas
+- Modo graus/radianos
+- Temas claro/escuro
+- Mais ferramentas de conversão
+- Testes automatizados no projeto
 
 ## Versão
 
-v1.0 — versão inicial.
+v2.0 — Nível 1 implementado.
