@@ -13,6 +13,7 @@ function applySettings(){store.saveSettings(state.settings);document.body.datase
 function renderPanels(){refs.tabs.forEach(t=>{const on=t.dataset.panel===state.panel;t.classList.toggle("is-active",on);t.setAttribute("aria-selected",String(on))});refs.panels.forEach(p=>p.hidden=p.dataset.panelContent!==state.panel)}
 function previewValue(){if(!state.expression.trim())return null;try{return engine.evaluate(state.expression,{angleMode:state.settings.angleMode,ans:Number(state.ans)||0})}catch{return null}}
 function render(){
+ document.body.dataset.theme=state.settings.theme;document.body.dataset.style=state.settings.style;document.body.classList.toggle("large-text",state.settings.largeText);document.body.classList.toggle("no-motion",!state.settings.animations);
  const pv=previewValue();
  refs.expr.textContent=state.justCalculated?display(state.expression)+" =":display(state.expression)||"0";
  refs.preview.textContent=!state.justCalculated&&state.expression&&pv!==null?"≈ "+fmt(engine.formatResult(pv)):"";
