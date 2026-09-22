@@ -1,0 +1,187 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color-scheme: dark;
+  --bg: #0f172a;
+  --panel: #111827;
+  --display: #020617;
+  --key: #1f2937;
+  --key-hover: #374151;
+  --action: #334155;
+  --operator: #2563eb;
+  --operator-hover: #1d4ed8;
+  --equals: #16a34a;
+  --equals-hover: #15803d;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --border: rgba(255, 255, 255, 0.08);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, #1e293b 0, var(--bg) 45%, #020617 100%);
+  color: var(--text);
+}
+
+button {
+  font: inherit;
+}
+
+.app {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.calculator {
+  width: min(100%, 380px);
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: rgba(17, 24, 39, 0.92);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(10px);
+}
+
+.calculator__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.calculator__brand {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.calculator__version {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.display {
+  min-height: 118px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 20px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--display);
+}
+
+.display__previous {
+  min-height: 20px;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.95rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.display__current {
+  width: 100%;
+  overflow: hidden;
+  font-size: clamp(2rem, 8vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.key {
+  min-height: 64px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--key);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1.2rem;
+  font-weight: 650;
+  transition: transform 120ms ease, background 120ms ease;
+  user-select: none;
+}
+
+.key:hover {
+  background: var(--key-hover);
+}
+
+.key:active {
+  transform: scale(0.96);
+}
+
+.key:focus-visible {
+  outline: 3px solid rgba(96, 165, 250, 0.55);
+  outline-offset: 2px;
+}
+
+.key--action {
+  background: var(--action);
+}
+
+.key--operator {
+  background: var(--operator);
+}
+
+.key--operator:hover {
+  background: var(--operator-hover);
+}
+
+.key--equals {
+  background: var(--equals);
+}
+
+.key--equals:hover {
+  background: var(--equals-hover);
+}
+
+.key--wide {
+  grid-column: span 2;
+}
+
+.calculator__hint {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+@media (max-width: 420px) {
+  .app {
+    padding: 12px;
+  }
+
+  .calculator {
+    padding: 14px;
+    border-radius: 20px;
+  }
+
+  .key {
+    min-height: 58px;
+    border-radius: 14px;
+  }
+
+  .display {
+    min-height: 106px;
+  }
+}
