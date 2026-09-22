@@ -2,7 +2,7 @@
 "use strict";
 const KEYS={history:"calculator.history.v5",favorites:"calculator.favorites.v5",settings:"calculator.settings.v5"};
 const LEGACY={history:"calculator.history.v4",favorites:"calculator.favorites.v4",settings:"calculator.settings.v4"};
-const DEFAULT_SETTINGS={theme:"dark",style:"glass",angleMode:"DEG",largeText:false,sound:false,animations:true};
+const DEFAULT_SETTINGS={theme:"dark",style:"glass",angleMode:"DEG",largeText:false,sound:false,animations:true,calculatorMode:"basic"};
 const MAX_HISTORY=100,MAX_FAVORITES=50;
 function safeParse(storage,key,fallback){try{const parsed=JSON.parse(storage.getItem(key)||"null");return parsed===null?fallback:parsed;}catch{return fallback;}}
 function cleanRecord(x){return x&&typeof x==="object"&&typeof x.expression==="string"&&typeof x.result==="string"?{id:String(x.id||Date.now()),expression:x.expression,result:x.result,timestamp:Number(x.timestamp)||Date.now(),angleMode:x.angleMode==="RAD"?"RAD":"DEG"}:null;}
