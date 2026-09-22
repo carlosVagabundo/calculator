@@ -33,6 +33,10 @@ Calculadora científica web com precedência matemática. O projeto agora inclui
 - Painel de sessão com indicadores
 - Ajuda integrada com atalhos de teclado
 - Controle de animações
+- Modo Básico compacto, inspirado em calculadoras de celular
+- Modo Científico completo com todas as funções avançadas
+- Teclado científico completo com 1, 2 e 3
+- Constantes π, e e ANS acionáveis pela interface
 - Memória usando a expressão atual quando possível
 - Manifest e service worker para cache/offline após a primeira visita em HTTPS
 
@@ -80,4 +84,4 @@ Abra index.html ou use o Live Server no VS Code. Não há dependências externas
 O workflow executa os testes dos Níveis 2, 3, 4 e a regressão específica do botão =.
 
 ## Versão
-v4.1 — Nível 4 implementado.
+v4.2 — Nível 4 com modos Básico e Científico.
