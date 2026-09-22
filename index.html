@@ -14,7 +14,7 @@
         <header class="calculator__header">
           <div class="brand">
             <span class="calculator__brand">Calculator</span>
-            <span class="calculator__version">v3.0</span>
+            <span class="calculator__version">v4.0</span>
           </div>
           <span id="memory-indicator" class="memory-indicator" hidden aria-label="Memória ativa">M</span>
         </header>
@@ -70,23 +70,47 @@
           <span><b>4</b> Soma/Subtração</span>
         </div>
 
-        <p class="calculator__hint">Teclado: números, + − × ÷, ^, %, ( ), Enter e Backspace.</p>
+        <p class="calculator__hint">Teclado: números, + − × ÷, ^, %, !, ( ), Enter e Backspace.</p>
         <p class="calculator__hint calculator__hint--secondary">Memória: M = M+, R = MR, D = MC.</p>
       </section>
 
-      <aside class="history-panel" aria-label="Histórico de cálculos">
-        <div class="history-panel__header">
-          <div>
-            <span class="eyebrow">REGISTROS</span>
-            <h1>Histórico</h1>
-            <p>Os resultados ficam guardados neste navegador.</p>
+      <aside class="side-panel" aria-label="Ferramentas da calculadora">
+        <nav class="panel-tabs" role="tablist" aria-label="Painéis">
+          <button class="panel-tab is-active" data-panel="history" type="button" role="tab" aria-selected="true">Histórico</button>
+          <button class="panel-tab" data-panel="favorites" type="button" role="tab" aria-selected="false">Favoritos</button>
+          <button class="panel-tab" data-panel="settings" type="button" role="tab" aria-selected="false">Configurações</button>
+        </nav>
+
+        <section data-panel-content="history" aria-label="Histórico">
+          <div class="panel-heading">
+            <div><span class="eyebrow">REGISTROS</span><h1>Histórico</h1><p>Clique em um cálculo para reutilizar a expressão.</p></div>
+            <button id="clear-history" class="history-clear" type="button">Limpar</button>
           </div>
-          <button id="clear-history" class="history-clear" type="button">Limpar</button>
-        </div>
-        <div id="history-list" class="history-list" aria-live="polite"></div>
+          <div id="history-list" class="record-list" aria-live="polite"></div>
+        </section>
+
+        <section data-panel-content="favorites" hidden aria-label="Favoritos">
+          <div class="panel-heading"><div><span class="eyebrow">SALVOS</span><h1>Favoritos</h1><p>Guarde expressões que você usa com frequência.</p></div></div>
+          <div id="favorites-list" class="record-list"></div>
+        </section>
+
+        <section data-panel-content="settings" hidden aria-label="Configurações">
+          <div class="panel-heading"><div><span class="eyebrow">AJUSTES</span><h1>Configurações</h1><p>Personalize aparência e trigonometria.</p></div></div>
+          <div class="settings">
+            <label class="setting"><span><strong>Ângulo</strong><small>Graus ou radianos.</small></span><select id="angle-mode"><option value="DEG">Graus (DEG)</option><option value="RAD">Radianos (RAD)</option></select></label>
+            <label class="setting"><span><strong>Tema</strong><small>Modo claro ou escuro.</small></span><select id="theme-select"><option value="dark">Escuro</option><option value="light">Claro</option></select></label>
+            <label class="setting"><span><strong>Estilo</strong><small>Acabamento visual da calculadora.</small></span><select id="style-select"><option value="glass">Glass</option><option value="classic">Clássico</option><option value="compact">Compacto</option></select></label>
+            <label class="setting setting--toggle"><span><strong>Texto maior</strong><small>Aumenta display e controles.</small></span><input id="large-text" type="checkbox"></label>
+            <label class="setting setting--toggle"><span><strong>Som</strong><small>Confirmação ao calcular.</small></span><input id="sound-toggle" type="checkbox"></label>
+            <button id="reset-settings" class="reset-settings" type="button">Restaurar padrões</button>
+          </div>
+        </section>
       </aside>
     </div>
   </main>
+  <script src="engine.js" defer></script>
+  <script src="storage.js" defer></script>
   <script src="script.js" defer></script>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
