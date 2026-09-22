@@ -1,62 +1,59 @@
 # Calculator
 
-Calculadora web evolutiva com histórico, memória e um motor de cálculo baseado na ordem de precedência da matemática.
+Calculadora científica web com cálculo por **expressão**, respeitando a ordem de precedência matemática.
 
-## Precedência usada
+## Níveis 2 e 3 implementados
 
-A expressão é analisada nesta ordem:
+### Nível 2 — Científica
 
-1. **Parênteses**
-2. **Potências**
-3. **Multiplicação e divisão**
-4. **Soma e subtração**
-
-Por exemplo:
-
-`2 + 3 × 4 = 14`
-
-e:
-
-`(2 + 3) × 4 = 20`
-
-A potência também respeita sua precedência:
-
-`2 + 3^2 × 4 = 38`
-
-## Funcionalidades
-
-- Soma, subtração, multiplicação e divisão
-- Cálculos encadeados
-- Ordem matemática de operações
 - Parênteses
-- Potência `xʸ`
-- Porcentagem simples
-- `±`
-- Backspace
-- Memória: `MC`, `MR`, `M+`, `M−`
-- Histórico persistente com `localStorage`
-- Reutilização de resultados do histórico
-- Suporte a teclado físico
-- Proteção contra divisão por zero
-- Tratamento de expressões inválidas
-- Interface responsiva e renovada
+- Potência
+- Raiz quadrada
+- x²
+- 1/x
+- Fatorial
+- Porcentagem
+- sen, cos e tan
+- log e ln
+- π e e
+- Graus e radianos
+- Operações encadeadas
+- Motor matemático sem `eval()`
 
-## Teclado
+### Nível 3 — Sistema e UX
 
-| Tecla | Função |
-| --- | --- |
-| `0` a `9` | Número |
-| `.` ou `,` | Decimal |
-| `+ - * /` | Operações |
-| `^` | Potência |
-| `%` | Porcentagem |
-| `(` e `)` | Parênteses |
-| `Enter` / `=` | Calcular |
-| `Backspace` | Apagar |
-| `Esc`, `Delete` ou `C` | Limpar |
-| `M` | M+ |
-| `R` | MR |
-| `D` | MC |
+- Histórico persistente
+- Excluir cálculo individual
+- Limpar histórico
+- Favoritos persistentes
+- Copiar resultado
+- Configurações
+- Tema claro/escuro
+- Estilos Glass, Clássico e Compacto
+- Texto maior
+- Feedback sonoro opcional
+- Layout responsivo
+- Melhor acessibilidade e foco de teclado
+
+## Ordem das expressões
+
+A calculadora interpreta uma expressão inteira nesta ordem:
+
+1. Parênteses
+2. Funções
+3. Potência
+4. Multiplicação e divisão
+5. Soma e subtração
+
+Exemplos:
+
+- `2 + 3 × 4 = 14`
+- `(2 + 3) × 4 = 20`
+- `2 + 3² × 4 = 38`
+- `2³² = 512`
+- `-2² = -4`
+
+O motor usa **Shunting-yard + RPN** e suporta sinais unários, potência associativa à direita, funções científicas, constantes e operadores pós-fixos.
 
 ## Estrutura
 
@@ -65,7 +62,12 @@ calculator/
 ├── index.html
 ├── style.css
 ├── script.js
+├── engine.js
+├── storage.js
 ├── README.md
+├── tests/
+│   ├── level2.test.js
+│   └── level3.test.js
 └── .github/
     └── workflows/
         └── pages.yml
@@ -73,8 +75,8 @@ calculator/
 
 ## Execução
 
-Não há dependências externas. Abra `index.html` no navegador ou use o Live Server no VS Code.
+Abra `index.html` diretamente ou use o Live Server no VS Code. Não há dependências externas.
 
 ## Versão
 
-v3.0
+v4.0 — Níveis 2 e 3 implementados.
