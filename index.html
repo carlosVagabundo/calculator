@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Calculadora web simples, responsiva e preparada para futuras melhorias.">
+  <title>Calculator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <section class="calculator" aria-label="Calculadora">
+      <header class="calculator__header">
+        <span class="calculator__brand">Calculator</span>
+        <span class="calculator__version">v1.0</span>
+      </header>
+
+      <div class="display" aria-live="polite">
+        <div id="previous-display" class="display__previous">0</div>
+        <div id="current-display" class="display__current">0</div>
+      </div>
+
+      <div class="keypad" role="group" aria-label="Teclado da calculadora">
+        <button class="key key--action" data-action="clear" type="button">C</button>
+        <button class="key key--action" data-action="backspace" type="button" aria-label="Apagar">⌫</button>
+        <button class="key key--operator" data-operation="%" type="button">%</button>
+        <button class="key key--operator" data-operation="/" type="button" aria-label="Dividir">÷</button>
+
+        <button class="key" data-number="7" type="button">7</button>
+        <button class="key" data-number="8" type="button">8</button>
+        <button class="key" data-number="9" type="button">9</button>
+        <button class="key key--operator" data-operation="*" type="button" aria-label="Multiplicar">×</button>
+
+        <button class="key" data-number="4" type="button">4</button>
+        <button class="key" data-number="5" type="button">5</button>
+        <button class="key" data-number="6" type="button">6</button>
+        <button class="key key--operator" data-operation="-" type="button" aria-label="Subtrair">−</button>
+
+        <button class="key" data-number="1" type="button">1</button>
+        <button class="key" data-number="2" type="button">2</button>
+        <button class="key" data-number="3" type="button">3</button>
+        <button class="key key--operator" data-operation="+" type="button" aria-label="Somar">+</button>
+
+        <button class="key key--wide" data-number="0" type="button">0</button>
+        <button class="key" data-number="." type="button" aria-label="Vírgula decimal">,</button>
+        <button class="key key--equals" data-action="equals" type="button">=</button>
+      </div>
+
+      <p class="calculator__hint">Use os botões ou o teclado físico.</p>
+    </section>
+  </main>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
