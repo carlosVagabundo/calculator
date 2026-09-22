@@ -1,24 +1,25 @@
 name: Calculator Tests
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
   contents: read
-
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
       - name: Setup Node
         uses: actions/setup-node@v6
         with:
           node-version: 24
-
-      - name: Run regression tests
+      - name: Level 2 tests
+        run: node tests/level2.test.js
+      - name: Level 3 tests
+        run: node tests/level3.test.js
+      - name: Level 4 tests
+        run: node tests/level4.test.cjs
+      - name: Equality regression
         run: node tests/equality.test.cjs

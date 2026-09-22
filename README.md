@@ -1,44 +1,42 @@
 # Calculator
 
-Calculadora científica web com cálculo por **expressão**, respeitando a ordem de precedência matemática.
+Calculadora científica web com precedência matemática. O projeto agora inclui o Nível 4, com recursos avançados de cálculo, persistência, acessibilidade, exportação de dados e funcionamento offline em ambientes compatíveis.
 
-## Níveis 2 e 3 implementados
-
-### Nível 2 — Científica
-
-- Parênteses
-- Potência
-- Raiz quadrada
-- x²
-- 1/x
-- Fatorial
-- Porcentagem
+## Nível 2 — Científica
+- Parênteses, potência, raiz, x², 1/x, fatorial e porcentagem
 - sen, cos e tan
 - log e ln
 - π e e
 - Graus e radianos
-- Operações encadeadas
-- Motor matemático sem `eval()`
+- Expressões completas respeitando precedência matemática
+- Motor sem eval()
 
-### Nível 3 — Sistema e UX
-
-- Histórico persistente
-- Excluir cálculo individual
-- Limpar histórico
-- Favoritos persistentes
+## Nível 3 — Sistema e UX
+- Histórico e favoritos persistentes
+- Exclusão individual e limpeza do histórico
 - Copiar resultado
-- Configurações
+- Configurações persistentes
 - Tema claro/escuro
 - Estilos Glass, Clássico e Compacto
-- Texto maior
-- Feedback sonoro opcional
-- Layout responsivo
-- Melhor acessibilidade e foco de teclado
+- Texto maior, som opcional, responsividade e foco acessível
+- Regressões automatizadas no GitHub Actions
 
-## Ordem das expressões
+## Nível 4 — Recursos avançados
+- ANS para reutilizar o último resultado
+- asin, acos, atan, abs, exp, floor e ceil
+- Prévia do resultado enquanto a expressão está válida
+- Busca em histórico e favoritos
+- Data e hora dos registros
+- Exportação e importação de backup JSON
+- Migração compatível com os dados do Nível 3
+- Saneamento dos dados persistidos
+- Painel de sessão com indicadores
+- Ajuda integrada com atalhos de teclado
+- Controle de animações
+- Memória usando a expressão atual quando possível
+- Manifest e service worker para cache/offline após a primeira visita em HTTPS
 
-A calculadora interpreta uma expressão inteira nesta ordem:
-
+## Precedência
 1. Parênteses
 2. Funções
 3. Potência
@@ -46,37 +44,40 @@ A calculadora interpreta uma expressão inteira nesta ordem:
 5. Soma e subtração
 
 Exemplos:
+- 2 + 3 × 4 = 14
+- (2 + 3) × 4 = 20
+- 2 + 3² × 4 = 38
+- 2³² = 512
+- -2² = -4
+- 2 + ANS usa o último resultado calculado
 
-- `2 + 3 × 4 = 14`
-- `(2 + 3) × 4 = 20`
-- `2 + 3² × 4 = 38`
-- `2³² = 512`
-- `-2² = -4`
-
-O motor usa **Shunting-yard + RPN** e suporta sinais unários, potência associativa à direita, funções científicas, constantes e operadores pós-fixos.
+O motor usa Shunting-yard + RPN e não depende de eval().
 
 ## Estrutura
-
-```text
 calculator/
 ├── index.html
 ├── style.css
 ├── script.js
 ├── engine.js
 ├── storage.js
+├── manifest.webmanifest
+├── sw.js
 ├── README.md
 ├── tests/
 │   ├── level2.test.js
-│   └── level3.test.js
+│   ├── level3.test.js
+│   ├── level4.test.cjs
+│   └── equality.test.cjs
 └── .github/
     └── workflows/
-        └── pages.yml
-```
+        ├── pages.yml
+        └── tests.yml
 
 ## Execução
+Abra index.html ou use o Live Server no VS Code. Não há dependências externas. Em GitHub Pages/HTTPS, o service worker é registrado automaticamente.
 
-Abra `index.html` diretamente ou use o Live Server no VS Code. Não há dependências externas.
+## Testes
+O workflow executa os testes dos Níveis 2, 3, 4 e a regressão específica do botão =.
 
 ## Versão
-
-v4.0 — Níveis 2 e 3 implementados.
+v4.1 — Nível 4 implementado.
