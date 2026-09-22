@@ -3,103 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Calculadora web com precedência matemática, histórico e memória.">
-  <title>Calculator</title>
+  <meta name="description" content="Calculator: calculadora científica com precedência matemática, histórico, favoritos e configurações.">
+  <meta name="theme-color" content="#0b1020">
+  <title>Calculator — Científica</title>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-theme="dark" data-style="glass">
   <main class="app">
     <div class="workspace">
-      <section class="calculator" aria-label="Calculadora">
+      <section class="calculator" aria-label="Calculadora científica">
         <header class="calculator__header">
           <div class="brand">
-            <span class="calculator__brand">Calculator</span>
-            <span class="calculator__version">v4.0</span>
+            <div class="brand__mark" aria-hidden="true">∑</div>
+            <div>
+              <div class="brand__row"><span class="calculator__brand">Calculator</span><span class="calculator__version">v4.0</span></div>
+              <span class="brand__subtitle">cálculo por expressão</span>
+            </div>
           </div>
           <span id="memory-indicator" class="memory-indicator" hidden aria-label="Memória ativa">M</span>
         </header>
-
         <div class="display" aria-live="polite" aria-atomic="true">
-          <div class="display__rule">Ordem: ( ) → ^ → × ÷ → + −</div>
-          <div id="previous-display" class="display__previous">0</div>
-          <div id="current-display" class="display__current">0</div>
+          <div class="display__topline"><span>Precedência matemática</span><span id="angle-badge" class="angle-badge">DEG</span></div>
+          <div id="expression-display" class="display__expression">0</div>
+          <div id="result-display" class="display__result">0</div>
+          <div id="status-message" class="status-message" role="alert"></div>
         </div>
-
         <div class="memory-buttons" role="group" aria-label="Memória">
           <button class="memory-button" data-action="memory-clear" type="button">MC</button>
           <button class="memory-button" data-action="memory-recall" type="button">MR</button>
           <button class="memory-button" data-action="memory-add" type="button">M+</button>
           <button class="memory-button" data-action="memory-subtract" type="button">M−</button>
         </div>
-
-        <div class="keypad" role="group" aria-label="Teclado da calculadora">
-          <button class="key key--action" data-action="clear" type="button">C</button>
+        <div id="keypad" class="keypad" role="group" aria-label="Teclado científico">
+          <button class="key key--action" data-action="clear" type="button">AC</button>
           <button class="key key--action" data-action="backspace" type="button" aria-label="Apagar">⌫</button>
           <button class="key key--function" data-action="open-paren" type="button">(</button>
           <button class="key key--function" data-action="close-paren" type="button">)</button>
-
-          <button class="key key--action" data-action="toggle-sign" type="button">±</button>
-          <button class="key key--function" data-operation="%" type="button">%</button>
+          <button class="key key--function" data-function-name="sin" type="button">sen</button>
+          <button class="key key--function" data-function-name="cos" type="button">cos</button>
+          <button class="key key--function" data-function-name="tan" type="button">tan</button>
+          <button class="key key--function" data-function-name="sqrt" type="button">√</button>
+          <button class="key key--function" data-function-name="log" type="button">log</button>
+          <button class="key key--function" data-function-name="ln" type="button">ln</button>
+          <button class="key key--function" data-action="square" type="button">x²</button>
           <button class="key key--function" data-operation="^" type="button">xʸ</button>
-          <button class="key key--operator" data-operation="/" type="button" aria-label="Dividir">÷</button>
-
+          <button class="key key--function" data-action="factorial" type="button">n!</button>
+          <button class="key key--function" data-action="inverse" type="button">1/x</button>
+          <button class="key key--function" data-action="toggle-sign" type="button">±</button>
+          <button class="key key--function" data-operation="%" type="button">%</button>
+          <button class="key key--constant" data-action="constant-pi" type="button">π</button>
+          <button class="key key--constant" data-action="constant-e" type="button">e</button>
+          <button class="key key--operator" data-operation="/" type="button">÷</button>
+          <button class="key key--operator" data-operation="*" type="button">×</button>
           <button class="key" data-number="7" type="button">7</button>
           <button class="key" data-number="8" type="button">8</button>
           <button class="key" data-number="9" type="button">9</button>
-          <button class="key key--operator" data-operation="*" type="button" aria-label="Multiplicar">×</button>
-
+          <button class="key key--operator" data-operation="-" type="button">−</button>
           <button class="key" data-number="4" type="button">4</button>
           <button class="key" data-number="5" type="button">5</button>
           <button class="key" data-number="6" type="button">6</button>
-          <button class="key key--operator" data-operation="-" type="button" aria-label="Subtrair">−</button>
-
-          <button class="key" data-number="1" type="button">1</button>
-          <button class="key" data-number="2" type="button">2</button>
-          <button class="key" data-number="3" type="button">3</button>
-          <button class="key key--operator" data-operation="+" type="button" aria-label="Somar">+</button>
-
+          <button class="key key--operator" data-operation="+" type="button">+</button>
           <button class="key key--wide" data-number="0" type="button">0</button>
           <button class="key" data-number="." type="button" aria-label="Decimal">,</button>
           <button class="key key--equals" data-action="equals" type="button">=</button>
         </div>
-
-        <div class="legend" aria-label="Regra de precedência">
-          <span><b>1</b> Parênteses</span>
-          <span><b>2</b> Potência</span>
-          <span><b>3</b> Multiplicação/Divisão</span>
-          <span><b>4</b> Soma/Subtração</span>
-        </div>
-
+        <div class="formula-card"><strong>Ordem usada</strong><span>Parênteses → Funções → Potência → × ÷ → + −</span></div>
         <p class="calculator__hint">Teclado: números, + − × ÷, ^, %, !, ( ), Enter e Backspace.</p>
-        <p class="calculator__hint calculator__hint--secondary">Memória: M = M+, R = MR, D = MC.</p>
       </section>
-
       <aside class="side-panel" aria-label="Ferramentas da calculadora">
         <nav class="panel-tabs" role="tablist" aria-label="Painéis">
           <button class="panel-tab is-active" data-panel="history" type="button" role="tab" aria-selected="true">Histórico</button>
           <button class="panel-tab" data-panel="favorites" type="button" role="tab" aria-selected="false">Favoritos</button>
           <button class="panel-tab" data-panel="settings" type="button" role="tab" aria-selected="false">Configurações</button>
         </nav>
-
         <section data-panel-content="history" aria-label="Histórico">
-          <div class="panel-heading">
-            <div><span class="eyebrow">REGISTROS</span><h1>Histórico</h1><p>Clique em um cálculo para reutilizar a expressão.</p></div>
-            <button id="clear-history" class="history-clear" type="button">Limpar</button>
-          </div>
+          <div class="panel-heading"><div><span class="eyebrow">REGISTROS</span><h1>Histórico</h1><p>Clique em um cálculo para reutilizar a expressão.</p></div><button id="clear-history" class="history-clear" type="button">Limpar</button></div>
           <div id="history-list" class="record-list" aria-live="polite"></div>
         </section>
-
         <section data-panel-content="favorites" hidden aria-label="Favoritos">
           <div class="panel-heading"><div><span class="eyebrow">SALVOS</span><h1>Favoritos</h1><p>Guarde expressões que você usa com frequência.</p></div></div>
           <div id="favorites-list" class="record-list"></div>
         </section>
-
         <section data-panel-content="settings" hidden aria-label="Configurações">
           <div class="panel-heading"><div><span class="eyebrow">AJUSTES</span><h1>Configurações</h1><p>Personalize aparência e trigonometria.</p></div></div>
           <div class="settings">
             <label class="setting"><span><strong>Ângulo</strong><small>Graus ou radianos.</small></span><select id="angle-mode"><option value="DEG">Graus (DEG)</option><option value="RAD">Radianos (RAD)</option></select></label>
             <label class="setting"><span><strong>Tema</strong><small>Modo claro ou escuro.</small></span><select id="theme-select"><option value="dark">Escuro</option><option value="light">Claro</option></select></label>
-            <label class="setting"><span><strong>Estilo</strong><small>Acabamento visual da calculadora.</small></span><select id="style-select"><option value="glass">Glass</option><option value="classic">Clássico</option><option value="compact">Compacto</option></select></label>
+            <label class="setting"><span><strong>Estilo</strong><small>Acabamento visual.</small></span><select id="style-select"><option value="glass">Glass</option><option value="classic">Clássico</option><option value="compact">Compacto</option></select></label>
             <label class="setting setting--toggle"><span><strong>Texto maior</strong><small>Aumenta display e controles.</small></span><input id="large-text" type="checkbox"></label>
             <label class="setting setting--toggle"><span><strong>Som</strong><small>Confirmação ao calcular.</small></span><input id="sound-toggle" type="checkbox"></label>
             <button id="reset-settings" class="reset-settings" type="button">Restaurar padrões</button>
@@ -108,9 +98,9 @@
       </aside>
     </div>
   </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="engine.js" defer></script>
   <script src="storage.js" defer></script>
   <script src="script.js" defer></script>
-  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>
