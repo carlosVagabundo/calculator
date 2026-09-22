@@ -1,53 +1,62 @@
 # Calculator
 
-Calculadora web desenvolvida como um projeto evolutivo. A base foi mantida simples e sem dependências externas para facilitar futuras expansões.
+Calculadora web evolutiva com histórico, memória e um motor de cálculo baseado na ordem de precedência da matemática.
 
-## Tecnologias
+## Precedência usada
 
-- HTML5
-- CSS3
-- JavaScript puro
-- Web Storage (localStorage) para o histórico
+A expressão é analisada nesta ordem:
 
-## Funcionalidades da versão 2.0
+1. **Parênteses**
+2. **Potências**
+3. **Multiplicação e divisão**
+4. **Soma e subtração**
+
+Por exemplo:
+
+`2 + 3 × 4 = 14`
+
+e:
+
+`(2 + 3) × 4 = 20`
+
+A potência também respeita sua precedência:
+
+`2 + 3^2 × 4 = 38`
+
+## Funcionalidades
 
 - Soma, subtração, multiplicação e divisão
-- Operações encadeadas com precedência matemática para `×` e `÷`
+- Cálculos encadeados
+- Ordem matemática de operações
+- Parênteses
+- Potência `xʸ`
 - Porcentagem simples
-- Botão `±` para inverter o sinal
-- Backspace para apagar um caractere
-- Memória: `MC`, `MR`, `M+` e `M−`
-- Histórico persistente no navegador
-- Limpeza do histórico
-- Clique em um item do histórico para reutilizar o resultado
+- `±`
+- Backspace
+- Memória: `MC`, `MR`, `M+`, `M−`
+- Histórico persistente com `localStorage`
+- Reutilização de resultados do histórico
 - Suporte a teclado físico
-- Atalhos de teclado para memória
 - Proteção contra divisão por zero
-- Tratamento de expressões inválidas e resultados não finitos
-- Layout responsivo
+- Tratamento de expressões inválidas
+- Interface responsiva e renovada
 
 ## Teclado
 
-| Tecla | Ação |
+| Tecla | Função |
 | --- | --- |
-| `0` a `9` | Digitar número |
+| `0` a `9` | Número |
 | `.` ou `,` | Decimal |
 | `+ - * /` | Operações |
+| `^` | Potência |
 | `%` | Porcentagem |
-| `Enter` ou `=` | Resultado |
+| `(` e `)` | Parênteses |
+| `Enter` / `=` | Calcular |
 | `Backspace` | Apagar |
-| `Esc` ou `Delete` | Limpar |
-| `C` | Limpar |
+| `Esc`, `Delete` ou `C` | Limpar |
 | `M` | M+ |
 | `R` | MR |
 | `D` | MC |
-
-## Como executar
-
-1. Clone o repositório.
-2. Abra `index.html` no navegador.
-
-Também é possível usar o Live Server no VS Code.
 
 ## Estrutura
 
@@ -62,16 +71,10 @@ calculator/
         └── pages.yml
 ```
 
-## Próximos passos sugeridos
+## Execução
 
-- Parênteses
-- Potência e raízes
-- Funções científicas
-- Modo graus/radianos
-- Temas claro/escuro
-- Mais ferramentas de conversão
-- Testes automatizados no projeto
+Não há dependências externas. Abra `index.html` no navegador ou use o Live Server no VS Code.
 
 ## Versão
 
-v2.0 — Nível 1 implementado.
+v3.0
