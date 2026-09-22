@@ -3,51 +3,76 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Calculadora web simples, responsiva e preparada para futuras melhorias.">
+  <meta name="description" content="Calculadora web responsiva com histórico, memória e operações encadeadas.">
   <title>Calculator</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="app">
-    <section class="calculator" aria-label="Calculadora">
-      <header class="calculator__header">
-        <span class="calculator__brand">Calculator</span>
-        <span class="calculator__version">v1.0</span>
-      </header>
+    <div class="workspace">
+      <section class="calculator" aria-label="Calculadora">
+        <header class="calculator__header">
+          <div>
+            <span class="calculator__brand">Calculator</span>
+            <span class="calculator__version">v2.0</span>
+          </div>
+          <span id="memory-indicator" class="memory-indicator" hidden aria-label="Memória armazenada">M</span>
+        </header>
 
-      <div class="display" aria-live="polite">
-        <div id="previous-display" class="display__previous">0</div>
-        <div id="current-display" class="display__current">0</div>
-      </div>
+        <div class="display" aria-live="polite" aria-atomic="true">
+          <div id="previous-display" class="display__previous">0</div>
+          <div id="current-display" class="display__current">0</div>
+        </div>
 
-      <div class="keypad" role="group" aria-label="Teclado da calculadora">
-        <button class="key key--action" data-action="clear" type="button">C</button>
-        <button class="key key--action" data-action="backspace" type="button" aria-label="Apagar">⌫</button>
-        <button class="key key--operator" data-operation="%" type="button">%</button>
-        <button class="key key--operator" data-operation="/" type="button" aria-label="Dividir">÷</button>
+        <div class="memory-buttons" role="group" aria-label="Memória">
+          <button class="memory-button" data-action="memory-clear" type="button">MC</button>
+          <button class="memory-button" data-action="memory-recall" type="button">MR</button>
+          <button class="memory-button" data-action="memory-add" type="button">M+</button>
+          <button class="memory-button" data-action="memory-subtract" type="button">M−</button>
+        </div>
 
-        <button class="key" data-number="7" type="button">7</button>
-        <button class="key" data-number="8" type="button">8</button>
-        <button class="key" data-number="9" type="button">9</button>
-        <button class="key key--operator" data-operation="*" type="button" aria-label="Multiplicar">×</button>
+        <div class="keypad" role="group" aria-label="Teclado da calculadora">
+          <button class="key key--action" data-action="clear" type="button">C</button>
+          <button class="key key--action" data-action="backspace" type="button" aria-label="Apagar último caractere">⌫</button>
+          <button class="key key--action" data-action="toggle-sign" type="button">±</button>
+          <button class="key key--operator" data-operation="%" type="button">%</button>
 
-        <button class="key" data-number="4" type="button">4</button>
-        <button class="key" data-number="5" type="button">5</button>
-        <button class="key" data-number="6" type="button">6</button>
-        <button class="key key--operator" data-operation="-" type="button" aria-label="Subtrair">−</button>
+          <button class="key" data-number="7" type="button">7</button>
+          <button class="key" data-number="8" type="button">8</button>
+          <button class="key" data-number="9" type="button">9</button>
+          <button class="key key--operator" data-operation="/" type="button" aria-label="Dividir">÷</button>
 
-        <button class="key" data-number="1" type="button">1</button>
-        <button class="key" data-number="2" type="button">2</button>
-        <button class="key" data-number="3" type="button">3</button>
-        <button class="key key--operator" data-operation="+" type="button" aria-label="Somar">+</button>
+          <button class="key" data-number="4" type="button">4</button>
+          <button class="key" data-number="5" type="button">5</button>
+          <button class="key" data-number="6" type="button">6</button>
+          <button class="key key--operator" data-operation="*" type="button" aria-label="Multiplicar">×</button>
 
-        <button class="key key--wide" data-number="0" type="button">0</button>
-        <button class="key" data-number="." type="button" aria-label="Vírgula decimal">,</button>
-        <button class="key key--equals" data-action="equals" type="button">=</button>
-      </div>
+          <button class="key" data-number="1" type="button">1</button>
+          <button class="key" data-number="2" type="button">2</button>
+          <button class="key" data-number="3" type="button">3</button>
+          <button class="key key--operator" data-operation="-" type="button" aria-label="Subtrair">−</button>
 
-      <p class="calculator__hint">Use os botões ou o teclado físico.</p>
-    </section>
+          <button class="key key--wide" data-number="0" type="button">0</button>
+          <button class="key" data-number="." type="button" aria-label="Vírgula decimal">,</button>
+          <button class="key key--operator" data-operation="+" type="button" aria-label="Somar">+</button>
+          <button class="key key--equals" data-action="equals" type="button">=</button>
+        </div>
+
+        <p class="calculator__hint">Teclado: 0–9, + − × ÷, %, Enter, Backspace e C.</p>
+        <p class="calculator__hint calculator__hint--secondary">Memória: M = M+, R = MR, D = MC.</p>
+      </section>
+
+      <aside class="history-panel" aria-label="Histórico de cálculos">
+        <div class="history-panel__header">
+          <div>
+            <h1>Histórico</h1>
+            <p>Seus últimos cálculos ficam salvos neste navegador.</p>
+          </div>
+          <button id="clear-history" class="history-clear" type="button">Limpar</button>
+        </div>
+        <div id="history-list" class="history-list" aria-live="polite"></div>
+      </aside>
+    </div>
   </main>
 
   <script src="script.js" defer></script>
