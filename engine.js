@@ -1,6 +1,6 @@
 (function(root,factory){const api=factory();if(typeof module!=="undefined"&&module.exports)module.exports=api;if(root)root.CalculatorEngine=api;})(typeof globalThis!=="undefined"?globalThis:this,function(){
 "use strict";
-const FUNCTIONS=new Set(["sqrt","sin","cos","tan","asin","acos","atan","log","ln","abs","exp","floor","ceil"]);
+const FUNCTIONS=new Set(["sqrt","cbrt","sin","cos","tan","asin","acos","atan","log","ln","abs","exp","floor","ceil"]);
 const CONSTANTS={pi:Math.PI,e:Math.E};
 const PRECEDENCE={"+":1,"-":1,"*":2,"/":2,"u+":3,"u-":3,"^":4,"!":5,"%":5};
 const RIGHT_ASSOCIATIVE=new Set(["^","u+","u-"]);
@@ -42,7 +42,7 @@ function toRpn(tokens){
 function factorial(v){if(v<0||!Number.isInteger(v))throw new Error("Fatorial exige inteiro não negativo");if(v>170)throw new Error("Fatorial muito grande");let r=1;for(let i=2;i<=v;i++)r*=i;return r;}
 function applyFunction(name,v,angleMode){
  switch(name){
-  case "sqrt":if(v<0)throw new Error("Raiz de número negativo");return Math.sqrt(v);
+  case "sqrt":if(v<0)throw new Error("Raiz de número negativo");return Math.sqrt(v);\n  case "cbrt":return Math.cbrt(v);
   case "sin":return Math.sin(angleMode==="DEG"?v*Math.PI/180:v);
   case "cos":return Math.cos(angleMode==="DEG"?v*Math.PI/180:v);
   case "tan":{const r=angleMode==="DEG"?v*Math.PI/180:v;if(Math.abs(Math.cos(r))<1e-12)throw new Error("Tangente indefinida");return Math.tan(r);}
