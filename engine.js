@@ -1,13 +1,13 @@
 (function(root,factory){const api=factory();if(typeof module!=="undefined"&&module.exports)module.exports=api;if(root)root.CalculatorEngine=api;})(typeof globalThis!=="undefined"?globalThis:this,function(){
 "use strict";
-const FUNCTIONS=new Set(["sqrt","sin","cos","tan","log","ln","abs"]);
+const FUNCTIONS=new Set(["sqrt","sin","cos","tan","asin","acos","atan","log","ln","abs","exp","floor","ceil"]);
 const CONSTANTS={pi:Math.PI,e:Math.E};
 const PRECEDENCE={"+":1,"-":1,"*":2,"/":2,"u+":3,"u-":3,"^":4,"!":5,"%":5};
 const RIGHT_ASSOCIATIVE=new Set(["^","u+","u-"]);
 function isNumberToken(token){return typeof token==="string"&&/^(?:(?:\d+(?:\.\d*)?)|(?:\.\d+))(?:[eE][+-]?\d+)?$/.test(token);}
 function isOperator(token){return token in PRECEDENCE;}
-function isValueToken(token){return token===")"||token==="!"||token==="%"||token in CONSTANTS||isNumberToken(token);}
-function canStartValue(token){return token==="("||token in CONSTANTS||FUNCTIONS.has(token)||isNumberToken(token);}
+function isValueToken(token){return token===")"||token==="!"||token==="%"||token==="ans"||token in CONSTANTS||isNumberToken(token);}
+function canStartValue(token){return token==="("||token==="ans"||token in CONSTANTS||FUNCTIONS.has(token)||isNumberToken(token);}
 function addImplicitMultiplication(tokens){const out=[];for(const token of tokens){const prev=out.at(-1);if(prev&&isValueToken(prev)&&canStartValue(token))out.push("*");out.push(token);}return out;}
 function tokenize(input){
  const text=String(input).replaceAll("×","*").replaceAll("÷","/").replaceAll("−","-");
@@ -16,7 +16,7 @@ function tokenize(input){
   const c=text[i];
   if(/\s/.test(c)){i++;continue;}
   if(/\d|\./.test(c)){const m=text.slice(i).match(/^(?:(?:\d+(?:\.\d*)?)|(?:\.\d+))(?:[eE][+-]?\d+)?/);if(!m)throw new Error("Número inválido");if(!Number.isFinite(Number(m[0])))throw new Error("Número inválido");tokens.push(m[0]);i+=m[0].length;continue;}
-  if(/[A-Za-z]/.test(c)){const m=text.slice(i).match(/^[A-Za-z]+/);const word=m[0].toLowerCase();if(!FUNCTIONS.has(word)&&!(word in CONSTANTS))throw new Error(`Função ou constante desconhecida: ${word}`);tokens.push(word);i+=m[0].length;continue;}
+  if(/[A-Za-z]/.test(c)){const m=text.slice(i).match(/^[A-Za-z]+/);const word=m[0].toLowerCase();if(word!=="ans"&&!FUNCTIONS.has(word)&&!(word in CONSTANTS))throw new Error(`Função ou constante desconhecida: ${word}`);tokens.push(word);i+=m[0].length;continue;}
   if("+-*/^%()!".includes(c)){tokens.push(c);i++;continue;}
   throw new Error(`Caractere inválido: ${c}`);
  }
@@ -26,7 +26,7 @@ function shouldPop(current,top){if(current==="u+"||current==="u-")return false;i
 function toRpn(tokens){
  const output=[],stack=[];let expectsValue=true;
  for(const token of addImplicitMultiplication(tokens)){
-  if(isNumberToken(token)||token in CONSTANTS){if(!expectsValue)throw new Error("Dois valores consecutivos");output.push(token in CONSTANTS?CONSTANTS[token]:Number(token));expectsValue=false;continue;}
+  if(isNumberToken(token)||token in CONSTANTS||token==="ans"){if(!expectsValue)throw new Error("Dois valores consecutivos");output.push(token==="ans"?token:(token in CONSTANTS?CONSTANTS[token]:Number(token)));expectsValue=false;continue;}
   if(FUNCTIONS.has(token)){if(!expectsValue)throw new Error("Função em posição inválida");stack.push(token);expectsValue=true;continue;}
   if(token==="("){if(!expectsValue)throw new Error("Multiplicação implícita ausente");stack.push(token);expectsValue=true;continue;}
   if(token===")"){if(expectsValue)throw new Error("Parênteses vazios ou expressão incompleta");while(stack.length&&stack.at(-1)!=="(")output.push(stack.pop());if(stack.pop()!=="(")throw new Error("Parênteses desbalanceados");if(FUNCTIONS.has(stack.at(-1)))output.push(stack.pop());expectsValue=false;continue;}
@@ -46,17 +46,24 @@ function applyFunction(name,v,angleMode){
   case "sin":return Math.sin(angleMode==="DEG"?v*Math.PI/180:v);
   case "cos":return Math.cos(angleMode==="DEG"?v*Math.PI/180:v);
   case "tan":{const r=angleMode==="DEG"?v*Math.PI/180:v;if(Math.abs(Math.cos(r))<1e-12)throw new Error("Tangente indefinida");return Math.tan(r);}
+  case "asin":{const r=Math.asin(v);if(Number.isNaN(r))throw new Error("asin exige valor entre -1 e 1");return angleMode==="DEG"?r*180/Math.PI:r;}
+  case "acos":{const r=Math.acos(v);if(Number.isNaN(r))throw new Error("acos exige valor entre -1 e 1");return angleMode==="DEG"?r*180/Math.PI:r;}
+  case "atan":{const r=Math.atan(v);return angleMode==="DEG"?r*180/Math.PI:r;}
   case "log":if(v<=0)throw new Error("Logaritmo exige valor positivo");return Math.log10(v);
   case "ln":if(v<=0)throw new Error("Logaritmo natural exige valor positivo");return Math.log(v);
   case "abs":return Math.abs(v);
+  case "exp":return Math.exp(v);
+  case "floor":return Math.floor(v);
+  case "ceil":return Math.ceil(v);
   default:throw new Error("Função desconhecida");
  }
 }
-function evaluate(input,{angleMode="DEG"}={}){
- const stack=[];
+function evaluate(input,{angleMode="DEG",ans=0}={}){
+ const stack=[];const safeAns=Number.isFinite(Number(ans))?Number(ans):0;
  for(const token of toRpn(Array.isArray(input)?input:tokenize(input))){
   if(typeof token==="number"){stack.push(token);continue;}
-  if(FUNCTIONS.has(token)){const v=stack.pop();if(v===undefined)throw new Error("Argumento ausente");stack.push(applyFunction(token,v,angleMode));continue;}
+  if(token==="ans"){stack.push(safeAns);continue;}
+  if(FUNCTIONS.has(token)){const v=stack.pop();if(v===undefined)throw new Error("Argumento ausente");const result=applyFunction(token,v,angleMode);if(!Number.isFinite(result))throw new Error("Resultado inválido");stack.push(result);continue;}
   if(token==="!"){const v=stack.pop();if(v===undefined)throw new Error("Valor ausente");stack.push(factorial(v));continue;}
   if(token==="%"){const v=stack.pop();if(v===undefined)throw new Error("Valor ausente");stack.push(v/100);continue;}
   if(token==="u+"||token==="u-"){const v=stack.pop();if(v===undefined)throw new Error("Valor ausente");stack.push(token==="u-"?-v:v);continue;}
@@ -68,6 +75,6 @@ function evaluate(input,{angleMode="DEG"}={}){
  if(stack.length!==1||!Number.isFinite(stack[0]))throw new Error("Expressão inválida");
  return stack[0];
 }
-function formatResult(value){if(!Number.isFinite(value))return"Erro";const n=Number(value.toPrecision(12));return Object.is(n,-0)?"0":String(n);}
+function formatResult(value){if(!Number.isFinite(value))return"Erro";const n=Number(Number(value).toPrecision(12));return Object.is(n,-0)?"0":String(n);}
 return{tokenize,toRpn,evaluate,formatResult,FUNCTIONS,CONSTANTS};
 });
