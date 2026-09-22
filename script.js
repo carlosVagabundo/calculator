@@ -1,608 +1,89 @@
 (() => {
-  "use strict";
+"use strict";
+const engine=window.CalculatorEngine;
+const store=window.CalculatorStorage.createStorage();
+const MAX_HISTORY=100,MAX_FAVORITES=50;
+const state={expression:"",result:"0",justCalculated:false,memory:0,history:store.loadHistory(),favorites:store.loadFavorites(),settings:store.loadSettings(),panel:"history"};
+const q=(s)=>document.querySelector(s);
+const refs={expr:q("#expression-display"),result:q("#result-display"),status:q("#status-message"),memory:q("#memory-indicator"),keypad:q("#keypad"),memoryButtons:q(".memory-buttons"),history:q("#history-list"),favorites:q("#favorites-list"),clearHistory:q("#clear-history"),tabs:[...document.querySelectorAll("[data-panel]")],panels:[...document.querySelectorAll("[data-panel-content]")],copy:q("#copy-result"),angle:q("#angle-mode"),theme:q("#theme-select"),style:q("#style-select"),large:q("#large-text"),sound:q("#sound-toggle"),reset:q("#reset-settings"),toast:q("#toast")};
 
-  const HISTORY_KEY = "calculator.history.v3";
-  const MAX_HISTORY_ITEMS = 50;
-
-  const state = {
-    current: "0",
-    tokens: [],
-    resetCurrent: false,
-    justCalculated: false,
-    lastExpression: "",
-    memory: 0,
-    history: [],
-    signForNextNumber: false
-  };
-
-  const $ = (selector) => document.querySelector(selector);
-  const refs = {
-    current: $("#current-display"),
-    previous: $("#previous-display"),
-    keypad: $(".keypad"),
-    history: $("#history-list"),
-    clearHistory: $("#clear-history"),
-    memoryIndicator: $("#memory-indicator")
-  };
-
-  const labels = { "+": "+", "-": "−", "*": "×", "/": "÷", "^": "^" };
-  const operators = new Set(Object.keys(labels));
-  const precedence = { "+": 1, "-": 1, "*": 2, "/": 2, "^": 3 };
-
-  function isOperator(token) {
-    return operators.has(token);
+function fmt(n){return String(n).replace(".",",")}
+function display(exp){return exp.replaceAll("sqrt(","√(").replaceAll("sin(","sen(").replaceAll("*","×").replaceAll("/","÷").replaceAll("-","−")}
+function toast(message){refs.toast.textContent=message;refs.toast.classList.add("is-visible");clearTimeout(toast.t);toast.t=setTimeout(()=>refs.toast.classList.remove("is-visible"),1700)}
+function setStatus(message){refs.status.textContent=message||"";refs.status.classList.toggle("is-visible",!!message)}
+function applySettings(){store.saveSettings(state.settings);render()}
+function renderPanels(){refs.tabs.forEach(t=>{const on=t.dataset.panel===state.panel;t.classList.toggle("is-active",on);t.setAttribute("aria-selected",String(on))});refs.panels.forEach(p=>p.hidden=p.dataset.panelContent!==state.panel)}
+function render(){
+  refs.expr.textContent=state.justCalculated?display(state.expression)+" =":(display(state.expression)||"0");
+  refs.result.textContent=fmt(state.result);refs.memory.hidden=state.memory===0;
+  refs.angle.value=state.settings.angleMode;refs.theme.value=state.settings.theme;refs.style.value=state.settings.style;refs.large.checked=!!state.settings.largeText;refs.sound.checked=!!state.settings.sound;
+  document.body.dataset.theme=state.settings.theme;document.body.dataset.style=state.settings.style;document.body.classList.toggle("large-text",!!state.settings.largeText);
+  renderHistory();renderFavorites();renderPanels();
+}
+function clearAll(){state.expression="";state.result="0";state.justCalculated=false;setStatus("");render()}
+function lastChar(){return state.expression.at(-1)||""}
+function currentNumberHasDecimal(){const m=state.expression.match(/(?:^|[+\-*/^(])(-?(?:\d+(?:\.\d*)?|\.\d*))$/);return !!(m&&m[1].includes("."))}
+function insert(text,kind){
+  if(state.justCalculated){
+    if(/^[+\-*/^]$/.test(text)||text==="%"||text==="!")state.expression=state.result;
+    else{state.expression="";state.result="0"}
+    state.justCalculated=false
   }
-
-  function normalizeNumber(value) {
-    if (!Number.isFinite(value)) return "Erro";
-    const n = Number(value.toPrecision(12));
-    return Object.is(n, -0) ? "0" : String(n);
+  if(kind==="function"){if(/[0-9.)A-Za-z]/.test(lastChar()))state.expression+="*";state.expression+=text+"(";setStatus("");render();return}
+  if(kind==="constant"){if(/[0-9.)]/.test(lastChar()))state.expression+="*";state.expression+=text;render();return}
+  if(text==="("){if(/[0-9.)]/.test(lastChar()))state.expression+="*";state.expression+="(";render();return}
+  if(text===")"){let b=0;for(const c of state.expression){if(c==="(")b++;else if(c===")")b--}if(b<=0||/[+\-*/^(]$/.test(state.expression)){toast("Parênteses incompletos.");return}state.expression+=")";setStatus("");render();return}
+  if(text==="!"||text==="%"){if(!state.expression||/[+\-*/^(]$/.test(state.expression)){toast("Digite um valor primeiro.");return}state.expression+=text;setStatus("");render();return}
+  if(/^[+\-*/^]$/.test(text)){
+    if(!state.expression){if(text==="-")state.expression="-";else{toast("Comece com um número.");return}}
+    else if(/[+\-*/^]$/.test(state.expression)){if(text==="-"&&!state.expression.endsWith("-"))state.expression+="-";else state.expression=state.expression.slice(0,-1)+text}
+    else state.expression+=text;
+    setStatus("");render();return
   }
-
-  function formatNumber(value) {
-    return value === "Erro" ? value : String(value).replace(".", ",");
-  }
-
-  function formatTokens(tokens) {
-    return tokens.map((token) => {
-      if (isOperator(token)) return labels[token];
-      return token;
-    }).join(" ");
-  }
-
-  function saveHistory() {
-    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(state.history)); }
-    catch { /* armazenamento pode estar bloqueado */ }
-  }
-
-  function loadHistory() {
-    try {
-      const data = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
-      if (!Array.isArray(data)) return;
-      state.history = data.filter(
-        (item) => item && typeof item.expression === "string" && typeof item.result === "string"
-      ).slice(0, MAX_HISTORY_ITEMS);
-    } catch {
-      state.history = [];
-    }
-  }
-
-  function renderHistory() {
-    refs.history.replaceChildren();
-
-    if (!state.history.length) {
-      const empty = document.createElement("div");
-      empty.className = "history-empty";
-      empty.textContent = "Nenhum cálculo realizado ainda.";
-      refs.history.appendChild(empty);
-      return;
-    }
-
-    state.history.forEach((item, index) => {
-      const button = document.createElement("button");
-      button.className = "history-item";
-      button.type = "button";
-      button.dataset.historyIndex = String(index);
-
-      const expression = document.createElement("span");
-      expression.className = "history-item__expression";
-      expression.textContent = item.expression;
-
-      const result = document.createElement("strong");
-      result.className = "history-item__result";
-      result.textContent = formatNumber(item.result);
-
-      button.append(expression, result);
-      refs.history.appendChild(button);
-    });
-  }
-
-  function addHistory(expression, result) {
-    state.history.unshift({ expression, result });
-    state.history = state.history.slice(0, MAX_HISTORY_ITEMS);
-    saveHistory();
-    renderHistory();
-  }
-
-  function clearHistory() {
-    state.history = [];
-    saveHistory();
-    renderHistory();
-  }
-
-  function updateMemoryIndicator() {
-    refs.memoryIndicator.hidden = state.memory === 0;
-  }
-
-  function render() {
-    const expression = state.justCalculated
-      ? (state.lastExpression ? state.lastExpression + " =" : "")
-      : formatTokens([
-          ...state.tokens,
-          ...(
-            !state.resetCurrent && state.current !== "0"
-              ? [state.current]
-              : []
-          )
-        ]);
-
-    refs.previous.textContent = expression || "0";
-    refs.current.textContent = formatNumber(state.signForNextNumber ? "-0" : state.current);
-    updateMemoryIndicator();
-  }
-
-  function resetAll() {
-    state.current = "0";
-    state.tokens = [];
-    state.resetCurrent = false;
-    state.justCalculated = false;
-    state.lastExpression = "";
-    state.signForNextNumber = false;
-    render();
-  }
-
-  function inputNumber(digit) {
-    if (state.current === "Erro") resetAll();
-
-    if (state.justCalculated) {
-      state.current = "0";
-      state.tokens = [];
-      state.justCalculated = false;
-      state.lastExpression = "";
-    }
-
-    if (state.resetCurrent) {
-      if (state.tokens.at(-1) === ")") state.tokens.push("*");
-      state.current = state.signForNextNumber ? "-0" : "0";
-      state.resetCurrent = false;
-    }
-
-    if (digit === ".") {
-      if (state.current.includes(".")) return;
-      if (state.current === "0") state.current = "0.";
-      else if (state.current === "-0") state.current = "-0.";
-      else state.current += ".";
-    } else if (state.current === "0") {
-      state.current = digit;
-    } else if (state.current === "-0") {
-      state.current = "-" + digit;
-    } else {
-      state.current += digit;
-    }
-
-    state.signForNextNumber = false;
-    render();
-  }
-
-  function toggleSign() {
-    if (state.current === "Erro") return;
-
-    const pending = isOperator(state.tokens.at(-1)) || state.tokens.at(-1) === "(";
-    if (state.resetCurrent && pending) {
-      state.signForNextNumber = !state.signForNextNumber;
-      render();
-      return;
-    }
-
-    const value = Number(state.current);
-    if (!Number.isFinite(value)) return;
-
-    if (value === 0) {
-      state.signForNextNumber = !state.signForNextNumber;
-    } else {
-      state.current = normalizeNumber(-value);
-      state.resetCurrent = false;
-      state.justCalculated = false;
-    }
-    render();
-  }
-
-  function applyPercent() {
-    if (state.current === "Erro") return;
-    const result = Number(state.current) / 100;
-    if (!Number.isFinite(result)) {
-      state.current = "Erro";
-      render();
-      return;
-    }
-    state.current = normalizeNumber(result);
-    state.resetCurrent = false;
-    state.justCalculated = false;
-    render();
-  }
-
-  function chooseOperation(operation) {
-    if (state.current === "Erro") return;
-
-    if (operation === "%") {
-      applyPercent();
-      return;
-    }
-
-    if (state.justCalculated) {
-      state.tokens = [state.current, operation];
-      state.justCalculated = false;
-      state.lastExpression = "";
-      state.resetCurrent = true;
-      state.signForNextNumber = false;
-      render();
-      return;
-    }
-
-    const last = state.tokens.at(-1);
-
-    if (!state.tokens.length) {
-      state.tokens.push(state.current, operation);
-    } else if (last === "(") {
-      if (operation === "-") state.signForNextNumber = !state.signForNextNumber;
-      render();
-      return;
-    } else if (isOperator(last)) {
-      state.tokens[state.tokens.length - 1] = operation;
-    } else if (last === ")") {
-      state.tokens.push(operation);
-    } else {
-      state.tokens.push(state.current, operation);
-    }
-
-    state.resetCurrent = true;
-    state.signForNextNumber = false;
-    render();
-  }
-
-  function openParenthesis() {
-    if (state.current === "Erro") resetAll();
-    if (state.justCalculated) resetAll();
-
-    const last = state.tokens.at(-1);
-
-    if (!state.tokens.length && state.current === "0" && !state.resetCurrent) {
-      state.tokens.push("(");
-    } else if (last === ")" || (!state.resetCurrent && state.tokens.length === 0 && state.current !== "0")) {
-      state.tokens.push("*", "(");
-    } else if (isOperator(last) || last === "(") {
-      state.tokens.push("(");
-    } else if (!state.resetCurrent) {
-      state.tokens.push(state.current, "*", "(");
-    } else {
-      return;
-    }
-
-    state.current = "0";
-    state.resetCurrent = true;
-    state.signForNextNumber = false;
-    render();
-  }
-
-  function closeParenthesis() {
-    if (state.current === "Erro") return;
-
-    let balance = 0;
-    for (const token of state.tokens) {
-      if (token === "(") balance++;
-      if (token === ")") balance--;
-    }
-    if (balance <= 0) return;
-
-    const last = state.tokens.at(-1);
-
-    if (!state.resetCurrent) {
-      if (last === "(" || isOperator(last) || last === ")") {
-        if (last !== ")") return;
-      } else {
-        state.tokens.push(state.current);
-      }
-    } else if (last !== ")") {
-      return;
-    }
-
-    state.tokens.push(")");
-    state.current = "0";
-    state.resetCurrent = true;
-    state.signForNextNumber = false;
-    state.justCalculated = false;
-    render();
-  }
-
-  function toRpn(tokens) {
-    const output = [];
-    const stack = [];
-    let expectsValue = true;
-
-    for (const token of tokens) {
-      if (token === "(") {
-        stack.push(token);
-        expectsValue = true;
-        continue;
-      }
-
-      if (token === ")") {
-        if (expectsValue) throw new Error("Parênteses inválidos");
-        while (stack.length && stack.at(-1) !== "(") output.push(stack.pop());
-        if (stack.pop() !== "(") throw new Error("Parênteses inválidos");
-        expectsValue = false;
-        continue;
-      }
-
-      if (isOperator(token)) {
-        if (expectsValue) throw new Error("Operador inesperado");
-
-        while (stack.length && isOperator(stack.at(-1))) {
-          const top = stack.at(-1);
-          const rightAssociative = token === "^";
-          const shouldPop = rightAssociative
-            ? precedence[token] < precedence[top]
-            : precedence[token] <= precedence[top];
-
-          if (!shouldPop) break;
-          output.push(stack.pop());
-        }
-
-        stack.push(token);
-        expectsValue = true;
-        continue;
-      }
-
-      const value = Number(token);
-      if (!expectsValue || !Number.isFinite(value)) {
-        throw new Error("Número inválido");
-      }
-      output.push(value);
-      expectsValue = false;
-    }
-
-    if (!output.length || expectsValue) throw new Error("Expressão incompleta");
-
-    while (stack.length) {
-      const token = stack.pop();
-      if (token === "(") throw new Error("Parênteses inválidos");
-      output.push(token);
-    }
-
-    return output;
-  }
-
-  function evaluateExpression(tokens) {
-    const stack = [];
-
-    for (const token of toRpn(tokens)) {
-      if (typeof token === "number") {
-        stack.push(token);
-        continue;
-      }
-
-      const right = stack.pop();
-      const left = stack.pop();
-      if (left === undefined || right === undefined) throw new Error("Expressão inválida");
-
-      let result;
-      switch (token) {
-        case "+": result = left + right; break;
-        case "-": result = left - right; break;
-        case "*": result = left * right; break;
-        case "/":
-          if (right === 0) throw new Error("Divisão por zero");
-          result = left / right;
-          break;
-        case "^": result = left ** right; break;
-        default: throw new Error("Operador inválido");
-      }
-
-      if (!Number.isFinite(result)) throw new Error("Resultado inválido");
-      stack.push(result);
-    }
-
-    if (stack.length !== 1) throw new Error("Expressão inválida");
-    return stack[0];
-  }
-
-  function calculate() {
-    if (state.current === "Erro") return;
-
-    const tokens = [...state.tokens];
-    const last = tokens.at(-1);
-
-    if (!state.resetCurrent) {
-      if (last === ")") {
-        // O grupo já está completo.
-      } else if (last === "(" || isOperator(last)) {
-        return;
-      } else {
-        tokens.push(state.current);
-      }
-    } else if (last !== ")") {
-      return;
-    }
-
-    // Toda expressão precisa ter parênteses balanceados antes de ser calculada.
-    let balance = 0;
-    for (const token of tokens) {
-      if (token === "(") balance++;
-      if (token === ")") balance--;
-      if (balance < 0) throw new Error("Parênteses inválidos");
-    }
-    if (balance !== 0) {
-      state.current = "Erro";
-      state.tokens = [];
-      state.resetCurrent = true;
-      state.justCalculated = true;
-      state.lastExpression = "Parênteses inválidos";
-      render();
-      return;
-    }
-
-    try {
-      const result = normalizeNumber(evaluateExpression(tokens));
-      if (result === "Erro") throw new Error("Resultado inválido");
-
-      const expression = formatTokens(tokens);
-      addHistory(expression, result);
-
-      state.current = result;
-      state.tokens = [];
-      state.resetCurrent = true;
-      state.justCalculated = true;
-      state.lastExpression = expression;
-      state.signForNextNumber = false;
-    } catch {
-      state.current = "Erro";
-      state.tokens = [];
-      state.resetCurrent = true;
-      state.justCalculated = true;
-      state.lastExpression = "Operação inválida";
-      state.signForNextNumber = false;
-    }
-
-    render();
-  }
-
-  function backspace() {
-    if (state.current === "Erro" || state.justCalculated) {
-      resetAll();
-      return;
-    }
-
-    if (state.resetCurrent) {
-      if (state.signForNextNumber) {
-        state.signForNextNumber = false;
-        render();
-        return;
-      }
-
-      const last = state.tokens.at(-1);
-      if (isOperator(last) || last === "(") state.tokens.pop();
-      else if (last === ")") state.tokens.pop();
-
-      state.current = "0";
-      render();
-      return;
-    }
-
-    if (state.current.length <= 1 || (state.current.length === 2 && state.current.startsWith("-"))) {
-      state.current = "0";
-    } else {
-      state.current = state.current.slice(0, -1);
-    }
-    render();
-  }
-
-  function memorySet(value) {
-    const normalized = normalizeNumber(value);
-    if (normalized === "Erro") return;
-    state.memory = Number(normalized);
-    updateMemoryIndicator();
-  }
-
-  function memoryAdd() {
-    const value = Number(state.current);
-    if (Number.isFinite(value)) memorySet(state.memory + value);
-  }
-
-  function memorySubtract() {
-    const value = Number(state.current);
-    if (Number.isFinite(value)) memorySet(state.memory - value);
-  }
-
-  function memoryRecall() {
-    if (state.current === "Erro") resetAll();
-    state.current = normalizeNumber(state.memory);
-    state.resetCurrent = false;
-    state.justCalculated = false;
-    state.lastExpression = "";
-    state.signForNextNumber = false;
-    render();
-  }
-
-  function memoryClear() {
-    state.memory = 0;
-    updateMemoryIndicator();
-  }
-
-  function action(type) {
-    switch (type) {
-      case "clear": resetAll(); break;
-      case "backspace": backspace(); break;
-      case "toggle-sign": toggleSign(); break;
-      case "equals": calculate(); break;
-      case "open-paren": openParenthesis(); break;
-      case "close-paren": closeParenthesis(); break;
-      case "memory-clear": memoryClear(); break;
-      case "memory-recall": memoryRecall(); break;
-      case "memory-add": memoryAdd(); break;
-      case "memory-subtract": memorySubtract(); break;
-      default: break;
-    }
-  }
-
-  refs.keypad.addEventListener("click", (event) => {
-    const button = event.target.closest("button");
-    if (!button) return;
-
-    const { number, operation } = button.dataset;
-    if (number !== undefined) inputNumber(number);
-    else if (operation !== undefined) chooseOperation(operation);
-    else if (button.dataset.action) action(button.dataset.action);
-  });
-
-  refs.history.addEventListener("click", (event) => {
-    const button = event.target.closest("button[data-history-index]");
-    if (!button) return;
-
-    const item = state.history[Number(button.dataset.historyIndex)];
-    if (!item) return;
-
-    state.current = item.result;
-    state.tokens = [];
-    state.resetCurrent = true;
-    state.justCalculated = false;
-    state.lastExpression = "";
-    state.signForNextNumber = false;
-    render();
-  });
-
-  refs.clearHistory.addEventListener("click", clearHistory);
-
-  const keyboard = {
-    Enter: calculate, "=": calculate,
-    Backspace: backspace, Escape: resetAll, Delete: resetAll,
-    c: resetAll,
-    "(": openParenthesis, ")": closeParenthesis,
-    "+": () => chooseOperation("+"),
-    "-": () => chooseOperation("-"),
-    "*": () => chooseOperation("*"),
-    "/": () => chooseOperation("/"),
-    "^": () => chooseOperation("^"),
-    "%": applyPercent,
-    m: memoryAdd, r: memoryRecall, d: memoryClear
-  };
-
-  document.addEventListener("keydown", (event) => {
-    const key = event.key;
-
-    if (/^\d$/.test(key)) {
-      event.preventDefault();
-      inputNumber(key);
-      return;
-    }
-
-    if (key === "." || key === ",") {
-      event.preventDefault();
-      inputNumber(".");
-      return;
-    }
-
-    const handler = keyboard[key] || keyboard[key.toLowerCase()];
-    if (handler) {
-      event.preventDefault();
-      handler();
-    }
-  });
-
-  loadHistory();
-  renderHistory();
-  render();
-
-  if (typeof window !== "undefined") {
-    window.__calculatorTest = { evaluateExpression, toRpn };
-  }
+  if(/^\d$/.test(text)||text==="."){if(text==="."&&currentNumberHasDecimal())return;if(text==="."&&(!state.expression||/[+\-*/^(]$/.test(state.expression)))state.expression+="0.";else state.expression+=text;setStatus("");render()}
+}
+function toggleSign(){if(!state.expression)state.expression="-";else if(/^-?(?:\d+(?:\.\d*)?|\.\d+)$/.test(state.expression))state.expression=state.expression.startsWith("-")?state.expression.slice(1):"-"+state.expression;else if(state.expression.startsWith("-(")&&state.expression.endsWith(")"))state.expression=state.expression.slice(2,-1);else state.expression="-("+state.expression+")";state.justCalculated=false;render()}
+function square(){if(!state.expression)return;state.expression+="^2";state.justCalculated=false;render()}
+function inverse(){state.expression=state.expression?"1/("+state.expression+")":"1/(";state.justCalculated=false;render()}
+function calculate(){
+  if(!state.expression.trim())return;
+  try{const value=engine.evaluate(state.expression,{angleMode:state.settings.angleMode});const result=engine.formatResult(value);if(result==="Erro")throw new Error("Resultado inválido");addHistory(display(state.expression),result);state.result=result;state.justCalculated=true;setStatus("");render();if(state.settings.sound)beep()}
+  catch(err){state.result="Erro";state.justCalculated=true;setStatus(err instanceof Error?err.message:"Expressão inválida");render()}
+}
+function addHistory(expression,result){state.history.unshift({id:Date.now()+"-"+Math.random().toString(36).slice(2,7),expression,result,timestamp:Date.now()});state.history=state.history.slice(0,MAX_HISTORY);store.saveHistory(state.history)}
+function removeHistory(id){state.history=state.history.filter(x=>x.id!==id);store.saveHistory(state.history);renderHistory()}
+function clearHistory(){state.history=[];store.saveHistory(state.history);renderHistory()}
+function favoriteExists(expression,result){return state.favorites.some(x=>x.expression===expression&&x.result===result)}
+function toggleFavorite(expression,result){const i=state.favorites.findIndex(x=>x.expression===expression&&x.result===result);if(i>=0){state.favorites.splice(i,1);toast("Removido dos favoritos.")}else{if(state.favorites.length>=MAX_FAVORITES)state.favorites.pop();state.favorites.unshift({id:Date.now()+"-"+Math.random().toString(36).slice(2,7),expression,result});toast("Adicionado aos favoritos.")}store.saveFavorites(state.favorites);renderHistory();renderFavorites()}
+function copyText(value){Promise.resolve().then(()=>navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(value):fallbackCopy(value)).then(()=>toast("Resultado copiado.")).catch(()=>toast("Não foi possível copiar."))}
+function fallbackCopy(value){const a=document.createElement("textarea");a.value=value;a.style.position="fixed";a.style.opacity="0";document.body.appendChild(a);a.select();document.execCommand("copy");a.remove()}
+function record(item,allowDelete){
+  const wrap=document.createElement("div");wrap.className="record";
+  const main=document.createElement("button");main.type="button";main.className="record__main";main.dataset.expression=item.expression;main.dataset.result=item.result;
+  const ex=document.createElement("span");ex.className="record__expression";ex.textContent=item.expression;const rs=document.createElement("strong");rs.className="record__result";rs.textContent=fmt(item.result);main.append(ex,rs);wrap.appendChild(main);
+  const actions=document.createElement("div");actions.className="record__actions";
+  const fav=document.createElement("button");fav.type="button";fav.className="icon-button";fav.dataset.action="favorite";fav.dataset.expression=item.expression;fav.dataset.result=item.result;fav.textContent=favoriteExists(item.expression,item.result)?"★":"☆";fav.setAttribute("aria-label",favoriteExists(item.expression,item.result)?"Remover favorito":"Adicionar favorito");actions.appendChild(fav);
+  const cp=document.createElement("button");cp.type="button";cp.className="icon-button";cp.dataset.action="copy";cp.dataset.result=item.result;cp.textContent="⧉";cp.setAttribute("aria-label","Copiar resultado");actions.appendChild(cp);
+  if(allowDelete){const del=document.createElement("button");del.type="button";del.className="icon-button icon-button--danger";del.dataset.action="delete";del.dataset.id=item.id;del.textContent="×";del.setAttribute("aria-label","Excluir histórico");actions.appendChild(del)}
+  wrap.appendChild(actions);return wrap
+}
+function renderHistory(){refs.history.replaceChildren();if(!state.history.length){const e=document.createElement("div");e.className="empty-state";e.textContent="Nenhum cálculo no histórico.";refs.history.appendChild(e);return}state.history.forEach(x=>refs.history.appendChild(record(x,true)))}
+function renderFavorites(){refs.favorites.replaceChildren();if(!state.favorites.length){const e=document.createElement("div");e.className="empty-state";e.textContent="Nenhuma expressão favorita.";refs.favorites.appendChild(e);return}state.favorites.forEach(x=>refs.favorites.appendChild(record(x,false)))}
+function useRecord(expression,result){state.expression=expression.replaceAll("×","*").replaceAll("÷","/").replaceAll("−","-").replaceAll("√(","sqrt(").replaceAll("sen(","sin(").replaceAll("π","pi");state.result=result;state.justCalculated=false;setStatus("");render()}
+function beep(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;const c=new C(),o=c.createOscillator(),g=c.createGain();o.frequency.value=560;g.gain.value=.025;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.05)}catch{}}
+function action(type){
+  if(type==="clear")return clearAll();if(type==="backspace"){if(state.justCalculated)return clearAll();state.expression=state.expression.slice(0,-1);render();return}
+  if(type==="toggle-sign")return toggleSign();if(type==="equals")return calculate();if(type==="square")return square();if(type==="inverse")return inverse();
+  if(type==="open-paren")return insert("(");if(type==="close-paren")return insert(")");if(type==="factorial")return insert("!");
+  if(type==="constant-pi")return insert("pi","constant");if(type==="constant-e")return insert("e","constant")
+}
+refs.keypad.addEventListener("click",(e)=>{const b=e.target.closest("button");if(!b)return;const d=b.dataset;if(d.number!==undefined)insert(d.number);else if(d.operation!==undefined)insert(d.operation);else if(d.functionName)insert(d.functionName,"function");else if(d.action)action(d.action)});
+refs.memoryButtons.addEventListener("click",(e)=>{const b=e.target.closest("button[data-action]");if(!b)return;const t=b.dataset.action;if(t==="memory-clear")state.memory=0;else if(t==="memory-recall")state.expression=engine.formatResult(state.memory);else if(t==="memory-add")state.memory+=Number(state.result)||0;else if(t==="memory-subtract")state.memory-=Number(state.result)||0;render()});
+[refs.history,refs.favorites].forEach(list=>list.addEventListener("click",e=>{const t=e.target.closest("button");if(!t)return;const a=t.dataset.action;if(a==="favorite")toggleFavorite(t.dataset.expression,t.dataset.result);else if(a==="copy")copyText(t.dataset.result);else if(a==="delete")removeHistory(t.dataset.id);else if(t.classList.contains("record__main"))useRecord(t.dataset.expression,t.dataset.result)}));
+refs.clearHistory.addEventListener("click",clearHistory);refs.copy.addEventListener("click",()=>copyText(state.result));
+refs.tabs.forEach(t=>t.addEventListener("click",()=>{state.panel=t.dataset.panel;renderPanels()}));
+refs.angle.addEventListener("change",()=>{state.settings.angleMode=refs.angle.value;store.saveSettings(state.settings);render()});
+refs.theme.addEventListener("change",()=>{state.settings.theme=refs.theme.value;applySettings()});refs.style.addEventListener("change",()=>{state.settings.style=refs.style.value;applySettings()});refs.large.addEventListener("change",()=>{state.settings.largeText=refs.large.checked;applySettings()});refs.sound.addEventListener("change",()=>{state.settings.sound=refs.sound.checked;applySettings()});refs.reset.addEventListener("click",()=>{state.settings={...window.CalculatorStorage.DEFAULT_SETTINGS};applySettings();toast("Configurações restauradas.")});
+document.addEventListener("keydown",(e)=>{const k=e.key;if(/^\d$/.test(k)){e.preventDefault();insert(k);return}if(k==="."||k===","){e.preventDefault();insert(".");return}if("+-*/^%".includes(k)||k==="("||k===")"||k==="!"){e.preventDefault();insert(k);return}if(k==="Enter"||k==="="){e.preventDefault();calculate();return}if(k==="Backspace"){e.preventDefault();action("backspace");return}if(k==="Escape"||k.toLowerCase()==="c"){e.preventDefault();clearAll();return}if(k.toLowerCase()==="m"){e.preventDefault();state.memory+=Number(state.result)||0;render();return}if(k.toLowerCase()==="r"){e.preventDefault();state.expression=engine.formatResult(state.memory);render();return}if(k.toLowerCase()==="d"){e.preventDefault();state.memory=0;render()}});
+render();
 })();
